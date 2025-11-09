@@ -61,10 +61,28 @@ void calculateWaitingTimeAndTurnaroundTimeAndExecutionOrder(Process proc[], int 
     }
 }
 
+// Function to perform the Round Robin (preemptive) scheduling
 void roundRobin(Process proc[], int n, int quantum) {
     calculateWaitingTimeAndTurnaroundTimeAndExecutionOrder(proc, n, quantum);
 }
 
+// Function to calculate the average waiting time and turnaround time
+void calcAvg(Process proc[], int n) {
+    float avg_waiting_time = 0;
+    float avg_turnaround_time = 0;
+    for (int i = 0; i < n; i++) {
+        avg_waiting_time += proc[i].waiting_time;
+        avg_turnaround_time += proc[i].turnaround_time;
+    }
+    avg_waiting_time /= n;
+    avg_turnaround_time /= n;
+
+    // Display the averages results
+    printf("\nAverage Waiting Time: %.2f\n", avg_waiting_time);
+    printf("Average Turnaround Time: %.2f\n", avg_turnaround_time);
+}
+
+// Function to print the processes and their details
 void printProcesses(Process proc[], int n) {
     printf("\n\nProcess ID\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
     for (int i = 0; i < n; i++) {
@@ -84,6 +102,7 @@ int main() {
 
     roundRobin(proc, NUM_PROCESSES, quantum);
     printProcesses(proc, NUM_PROCESSES);
+    calcAvg(proc, NUM_PROCESSES);
 
     return 0;
 }
