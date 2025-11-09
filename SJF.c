@@ -5,94 +5,124 @@
 #include <stdlib.h>
 #include <limits.h>
 
+// Constant for the number of processes
+#define NUM_PROCESSES 4
+
 typedef struct {
     int process_id;
     int arrival_time;
     int burst_time;
-    int remaining_time;
+    int remaining_time; // Used to track CPU Scheduling
     int waiting_time;
     int turnaround_time;
     int is_completed;
 } Process;
 
-int n; // Number of processes
-int running; // Running state of SJF algorithm (0 = finished, 1 = running)
-int time; // Time stamp of the simulation
+// Function to find the index of the next process to run based on Shortest Time Remaining First (preemptive)
+// Finds the process with the minimum remaining time for all processes that have arrived and not finished
+int findNextProcess(Process proc[], int n, int current_time) {
+    int lowest_remaining_time = INT_MAX;
+    int index = -1;
 
-// Function to sort the processes by arrival time
-void sortArrivalTime(Process proc[], int n) {
-    for (int i = 0; i < n-1; i++) {
-        for (int j = 0; j < n-1; j++) {
-            // Check if a swap is needed
-            if (proc[j].arrival_time > proc[j+1].arrival_time) {
-                // Perform the swap
-                Process temp = proc[j];
-                proc[j] = proc[j+1];
-                proc[j+1] = temp;
+    for (int i = 0; i < n; i++) {
+        // Check if current process has:
+        // Arrived
+        // Not finished
+        // Minimum remaining time
+        if (proc[i].arrival_time <= current_time && !proc[i].is_completed) {
+            if (proc[i].remaining_time < lowest_remaining_time) {
+                // Update lowest remaining time and index trackers
+                lowest_remaining_time = proc[i].remaining_time;
+                index = i;
             }
         }
     }
-}
-
-// Function to find the index of the process with the current lowest burst time
-int findNextProcess(Process proc[], int n) {
-    int lowest_burst_time = INT_MAX;
-    int index;
-    for (int i = 0; i < n; i++) {
-        // Check if current process has lower burst time and has not finished
-        if (proc[i].burst_time < lowest_burst_time && !(proc[i].is_completed)) {
-            lowest_burst_time = proc[i].burst_time;
-            index = i;
-        }
-    }
+    // Return the index, will return -1 only if no processes are ready
     return index;
 }
 
-// Function to calculate the waiting time for each process
-// void calcWaitingTime(Process proc[], int n) {
-//     for (int i = 0; i < n; i++) {
-//         proc[i].waiting_time = 
-//     }
-// }
+// Function to check if all the processes have finished
+int allProcessesFinished(Process proc[], int n) {
+    for (int i = 0; i < n; i++) {
+        // Check if any process is not finished
+        if (!proc[i].is_completed) {
+            return 0;
+        }
+    }
+    // Return 1 only if all processes have finished
+    return 1;
+}
 
 // Function to perform the Shortest Remaining Time First (preemptive) scheduling
-void srtf(Process proc[], int n, int running, int time) {
-    // Sort the process by arrival time
-    sortArrivalTime(proc, n);
+void srtf(Process proc[], int n) {
+    int time = 0; // Time tracker for simulation
+    int prev_process_index = -1; // Index of previous process in simulation
+    
+    // Continue the simulation until all processes have finished
+    while (!allProcessesFinished(proc, n)) {
+        // Find current process to run
+        int curr_process_index = findNextProcess(proc, n, time);
 
-    // Calculate the waiting time for each process 
+        // Skip current time if no processes are ready
+        if (curr_process_index == -1) {
+            time++;
+            continue;
+        }
 
-    // First start the process with lowest arrival time
-    printf("Time %d: Process %d starts\n", time++, proc[0].process_id);
-    // update burst time
-    proc[0].burst_time -= 1;
+        // Check if current process is different from previous process
+        if (curr_process_index != prev_process_index) {
+            // Display the current process has started
+            printf("Time %d: Process %d starts\n", time, proc[curr_process_index].process_id);
+        }
 
-    int current_index;
+        // Update current process remaining time
+        proc[curr_process_index].remaining_time--;
 
-    // Start the simulation
-    while (running) {
-        // Increment current time
+        // Check if current process has finished
+        if (proc[curr_process_index].remaining_time == 0) {
+            // Set current process as finished
+            proc[curr_process_index].is_completed = 1;
+
+            // Calculate the Waiting Time and Turnaround Time
+            // Waiting Time: Current Time (time+1) - Arrival Time - Burst Time
+            proc[curr_process_index].waiting_time = 
+                time + 1 - proc[curr_process_index].arrival_time - proc[curr_process_index].burst_time;
+            // Turnaround Time: Current Time (time+1) - Arrival Time
+            proc[curr_process_index].turnaround_time = time + 1 - proc[curr_process_index].arrival_time;
+
+            // Display the current process finishes
+            printf("Time %d: Process %d finishes\n", time + 1, proc[curr_process_index].process_id);
+
+            // Reset previous process index back to -1
+            prev_process_index = -1;
+        } else {
+            // Update previous process index for next iteration
+            prev_process_index = curr_process_index;
+        }
+        // Update the time to keep the simulation running
         time++;
-
-        // Check for current lowest process burst time
-        current_index = findNextProcess(proc, n);
-
-        // Update 
-
-        // Check if a process starts or completes
-
-
-        // Print the current time
-        printf("Time %d: ", time);
-        
-        // Find next process with shortest remaining time
-
     }
+}
+
+// Function to calculate the average waiting time and turnaround time
+void calcAvg(Process proc[], int n) {
+    float avg_waiting_time = 0;
+    float avg_turnaround_time = 0;
+    for (int i = 0; i < n; i++) {
+        avg_waiting_time += proc[i].waiting_time;
+        avg_turnaround_time += proc[i].turnaround_time;
+    }
+    avg_waiting_time /= n;
+    avg_turnaround_time /= n;
+
+    // Display the averages results
+    printf("\nAverage Waiting Time: %.2f\n", avg_waiting_time);
+    printf("Average Turnaround Time: %.2f\n", avg_turnaround_time);
 }
 
 // Function to print the processes and their details
 void printProcesses(Process proc[], int n) {
-    printf("Process ID\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    printf("\nProcess ID\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
     for (int i = 0; i < n; i++) {
         printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\n",
                proc[i].process_id, proc[i].arrival_time, proc[i].burst_time,
@@ -102,13 +132,16 @@ void printProcesses(Process proc[], int n) {
 
 int main() {
     // Initialize processes with their IDs, arrival times, and burst times
-    Process proc[] = {{1, 5, 8}, {2, 1, 4}, {3, 0, 9}, {4, 3, 5}};
-    n = sizeof(proc) / sizeof(proc[0]);
-    running = 1;
-    time = -1;
+    Process proc[NUM_PROCESSES] = {
+        {1, 0, 8, 8, 0, 0, 0}, 
+        {2, 1, 4, 4, 0, 0, 0}, 
+        {3, 2, 9, 9, 0, 0, 0}, 
+        {4, 3, 5, 5, 0, 0, 0}
+    };
 
-    // srtf(proc, n, running, time);
-    printProcesses(proc, n);
+    srtf(proc, NUM_PROCESSES);
+    printProcesses(proc, NUM_PROCESSES);
+    calcAvg(proc, NUM_PROCESSES);
 
     return 0;
 }
