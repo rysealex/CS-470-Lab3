@@ -16,4 +16,4 @@ all:$(TARGET2)
 $(TARGET1): $(TARGET1).c
 		$(CC) $(CFLAGS) -o $(TARGET1) $(TARGET1).c 
 $(TARGET2): $(TARGET2).c
-		$(CC) $(CFLAGS) -o $(TARGET2) $(TARGET2).c 
+		$(CC) $(CFLAGS) -o $(TARGET2) $(TARGET2).c  -lm
