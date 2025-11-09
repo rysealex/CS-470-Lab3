@@ -1,3 +1,6 @@
+// Alex Ryse
+// CS 470 - Operating Systems
+
 #include <stdio.h>
 #include <stdlib.h>
 
